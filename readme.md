@@ -1,31 +1,25 @@
-# Math Interpreter in C
+# Graph Plotter in C
 
-This is a simple math interpreter implemented in C that can evaluate basic mathematical expressions involving functions like `sin`, `cos`, `tan`, `log`, `exp`, and more. The interpreter allows you to input a mathematical expression as a string and returns the result of the evaluation.
+This is a simple Graph Plotter implemented in C that allows you to visualize mathematical functions on a graph. The plotter uses the Cairo graphics library to render the graph on the screen.
 
 ## How to Use
 
-1. Compile the code using a C compiler, such as GCC.
+1. Compile the code using a C compiler, such as GCC and execute.
    
-   ## For Linux
+   ## For Linux or Window (use Bash based command line and MSYS2)
    ```bash
-   gcc -o math_interpreter math_interpreter.c -lm
-   ```
-   ## For windows
-   ```cmd
-   gcc -o math_interpreter.exe math_interpreter.c
-   ```
-2. Execute 
-      
-    ## For Linux
-   ```bash
-   ./math_interpreter
-   ```
-   ## For windows
-   ```cmd
-   math_interpreter.exe
+   ./runner.sh
    ```
 
+# Input the mathematical expression for the function you want to plot.
 
+For example, you can input expressions like:
+
++ sin(x)
++ exp(x)
++ add(sin(x), cos(x))
+
+The Graph Builder will compile the input expression using the Math Interpreter and plot the graph on the screen using the Cairo graphics library.
 
 # Supported Functions
 ### The interpreter supports the following mathematical functions:
@@ -49,7 +43,7 @@ This is a simple math interpreter implemented in C that can evaluate basic mathe
 + `logBase(10, 100)` - Calculates the logarithm base 10 of 100.
 
 # Supported Variables
-The interpreter supports a variable x that you can use in your expressions. The value of x is set to the result of pi / 3 (approximately 1.047) before evaluation. You can use x in place of any number in your expressions.
+The interpreter supports a variable x that you can use in your expressions.
 
 # Important Note
 Since this interpreter is designed for basic math expressions, it may not handle complex expressions, operator precedence, or nested function calls in certain cases. Additionally, it doesn't support advanced mathematical operations like calculus or symbolic manipulation.
