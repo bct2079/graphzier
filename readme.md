@@ -8,7 +8,7 @@ This is a simple Graph Plotter implemented in C that allows you to visualize mat
    
    ## For Linux or Window (use Bash based command line and MSYS2)
    ```bash
-   ./runner.sh
+   ./runner.sh canvas.c
    ```
 
 # Input the mathematical expression for the function you want to plot.
