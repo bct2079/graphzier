@@ -1,0 +1,15 @@
+.zoom {
+  border-radius: 100px;
+  font-size: 20pt;
+}
+button.zoom {
+  background: rgb(75, 75, 75);
+  color: white;
+  padding-bottom: 10px;
+}
+
+button.zoom:hover {
+  background: rgb(38, 38, 38);
+}
+label {
+}
