@@ -9,6 +9,7 @@ static void redraw_drawing_area(gpointer user_data);
 
 GtkWidget *areaGlobal;
 GtkWidget *eqnEntry;
+GtkWidget *listbox;
 
 void applyCSS(GtkWindow *win)
 {
@@ -39,6 +40,10 @@ typedef struct
     int func;
     char *t;
     Value value;
+    int show;
+    double r;
+    double g;
+    double b;
 } Plot;
 
 typedef struct
@@ -48,6 +53,7 @@ typedef struct
 } MultiPlot;
 
 MultiPlot *mp;
+
 void initialize()
 {
     mp = calloc(1, sizeof(MultiPlot));
@@ -55,12 +61,35 @@ void initialize()
     mp->p = calloc(10, sizeof(Plot *));
 }
 
+void remove_plot_from_multiplot(int index)
+{
+    if (mp == NULL || mp->size < 0 || mp->p == NULL || index < 0 || index > mp->size)
+    {
+        return;
+    }
+
+    free(mp->p[index]);
+
+    for (int i = index; i < mp->size; i++)
+    {
+        mp->p[i] = mp->p[i + 1];
+    }
+
+    mp->size--;
+}
+
 void addPlot(Value v)
 {
+    double r, g, b;
+    randomize_color(&r, &g, &b);
     Plot *p = calloc(1, sizeof(Plot));
     p->func = 1;
     p->t = "rabin";
+    p->show = 1;
     p->value = v;
+    p->r = r;
+    p->g = g;
+    p->b = b;
     mp->size++;
     mp->p[mp->size] = p;
     redraw_drawing_area(areaGlobal);
@@ -70,32 +99,43 @@ static void start_main_draw(Grid *grid, int W, int h)
 {
     for (int j = 0; j <= mp->size; j++)
     {
-        g_print("lol:%d", mp->size);
-        double px = -1.0 * W;
-        for (double i = -1.0 * W / gap; i <= W / gap; i += 0.01)
+        int indexT = (int)j;
+        Plot *p1 = mp->p[indexT];
+        if (mp->p[indexT]->show)
         {
-            // point(grid, i, f(i));
-            int indexT = (int)j;
-            double py = evaluateAST(&mp->p[indexT]->value.ast, px);
-            double y = evaluateAST(&mp->p[indexT]->value.ast, i);
-
-            createLine(grid, px, py, i, y);
-            px = i;
+            double px = -1.0 * W;
+            for (double i = -1.0 * W / gap; i <= W / gap; i += 0.001)
+            {
+                double py = evaluateAST(&mp->p[indexT]->value.ast, px);
+                double y = evaluateAST(&mp->p[indexT]->value.ast, i);
+                cairo_set_source_rgb(grid->cr, p1->r, p1->g, p1->b);
+                // point(grid, i, y);
+                // this needs fix
+                createLine(grid, px, py, i, y);
+                px = i;
+            }
         }
-        // if (j % 2 == 0)
-        // {
+    }
+}
+void removeWidgetFromList(GtkButton *button, gpointer data)
+{
+    GtkWidget *box = GTK_WIDGET(data);
+    GtkListBoxRow *row = GTK_LIST_BOX_ROW(gtk_widget_get_ancestor(box, GTK_TYPE_LIST_BOX_ROW));
+    g_print("\ntest0\n");
+    if (row != NULL)
+    {
+        g_print("\ntest0\n");
 
-        // }
-        // else
-        // {
-
-        //     double px = -1.0 * W;
-        //     for (double i = -1.0 * W / gap; i <= W / gap; i += 0.01)
-        //     {
-        //         createLine(grid, px, f2(px), i, f2(i));
-        //         px = i;
-        //     }
-        // }
+        int index = gtk_list_box_row_get_index(row);
+        g_print("%d", index);
+        remove_plot_from_multiplot(index);
+        g_print("index:%d\n", index);
+        // gtk_widget_unparent(box);
+        g_print("\ntest1\n");
+        gtk_list_box_remove(GTK_LIST_BOX(listbox), GTK_WIDGET(row));
+        g_print("\ntest2\n");
+        redraw_drawing_area(areaGlobal);
+        g_print("\ntest3\n");
     }
 }
 
@@ -113,7 +153,6 @@ static void draw_function(GtkDrawingArea *area, cairo_t *cr, int width, int heig
 static void redraw_drawing_area(gpointer user_data)
 {
     gtk_widget_queue_draw(GTK_WIDGET(user_data));
-    g_print("gap=%d\n", gap);
 }
 static void ZoomIn(GtkWidget *widget, gpointer user_data)
 {
@@ -132,65 +171,62 @@ static void ZoomOut(GtkWidget *widget, gpointer user_data)
 
 GtkWidget *one_area_input(GtkWidget *area, char *v)
 {
-    GtkWidget *button = gtk_button_new_with_label("+");
+    GtkWidget *button = gtk_button_new_with_label("🗑");
     GtkWidget *box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 10);
     GtkWidget *label1 = gtk_label_new(v);
+    const char *class1[] = {"eqnlabel", NULL};
+    gtk_widget_set_css_classes(label1, class1);
+
+    const char *class2[] = {"deleteBtn", NULL};
+    gtk_widget_set_css_classes(button, class2);
     gtk_box_append(GTK_BOX(box), label1);
     gtk_widget_set_hexpand(label1, TRUE);
 
     gtk_box_append(GTK_BOX(box), button);
+    g_signal_connect(button, "clicked", G_CALLBACK(removeWidgetFromList), box);
     return box;
 }
+
 static void add_one_area_input(GtkWidget *widget, gpointer user_data)
 {
-    GtkWidget *listbox = GTK_WIDGET(user_data);
     GtkEntryBuffer *buffer = gtk_entry_get_buffer(GTK_ENTRY(eqnEntry));
     const char *codeEqn = gtk_entry_buffer_get_text(buffer);
 
     char *mutableCodeEqn = g_strdup(codeEqn);
 
     Value v = func(mutableCodeEqn, 1);
-    // g_print("Value: %s\n", v);
 
-    // if (!v.error.isError)
-    // {
     GtkWidget *area = one_area_input(areaGlobal, mutableCodeEqn);
     gtk_list_box_append(GTK_LIST_BOX(listbox), area);
     addPlot(v);
-    // }
-    // g_free(mutableCodeEqn);
 }
 
 static void design_box(GtkBox *box, GtkWidget *area)
 {
     initialize();
-    // GtkWidget *label = gtk_label_new("Write function here");
     eqnEntry = gtk_entry_new();
     GtkWidget *topBox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 10);
     GtkWidget *headerBox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 10);
     GtkWidget *addAreaButton = gtk_button_new_with_label("add");
-    GtkWidget *listbox = gtk_list_box_new();
+    const char *class2[] = {"addBtn", NULL};
+    gtk_widget_set_css_classes(addAreaButton, class2);
+    listbox = gtk_list_box_new();
     areaGlobal = area;
+    const char *class1[] = {"listbox", NULL};
+    gtk_widget_set_css_classes(listbox, class1);
 
     gtk_widget_set_hexpand(eqnEntry, TRUE);
-    // gtk_widget_set_halign(eqnEntry, GTK_ALIGN_CENTER);
-
-    // GtkWidget *first_area = one_area_input(area);
-    // GtkWidget *second_area = one_area_input(area);
+    gtk_widget_set_vexpand(listbox, TRUE);
 
     gtk_box_append(GTK_BOX(headerBox), eqnEntry);
     gtk_box_append(GTK_BOX(headerBox), addAreaButton);
 
     gtk_box_append(GTK_BOX(topBox), headerBox);
     gtk_box_append(GTK_BOX(box), topBox);
-    // gtk_widget_set_hexpand(first_area, TRUE);
-    // gtk_widget_set_hexpand(second_area, TRUE);
-    // gtk_list_box_append(GTK_LIST_BOX(listbox), first_area);
     gtk_box_append(GTK_BOX(box), listbox);
     g_signal_connect(addAreaButton, "clicked", G_CALLBACK(add_one_area_input), listbox);
-
-    // gtk_box_append(GTK_BOX(box), first_area);
-    // gtk_box_append(GTK_BOX(box), second_area);
+    const char *class[] = {"sidebar", NULL};
+    gtk_widget_set_css_classes(GTK_WIDGET(box), class);
 }
 
 static void app_activate(GApplication *app, gpointer user_data)

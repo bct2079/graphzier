@@ -225,25 +225,29 @@ void point(Grid *grid, double x1, double y1)
 }
 void randomize_color(double *red, double *green, double *blue)
 {
+    // Color collection with 9 colors (dark tones)
+    const double colors[9][3] = {
+        {0.8, 0.2, 0.2}, // Red
+        {0.2, 0.8, 0.2}, // Green
+        {0.2, 0.2, 0.8}, // Blue
+        {0.8, 0.8, 0.2}, // Yellow
+        {0.8, 0.2, 0.8}, // Magenta
+        {0.2, 0.8, 0.8}, // Cyan
+        {0.6, 0.3, 0.1}, // Brown
+        {0.5, 0.5, 0.5}, // Gray
+        {0.1, 0.6, 0.3}  // Dark Green
+    };
+
     // Set a seed for the random number generator.
     srand(time(NULL));
 
-    // Generate random values for the RGB components.
-    *red = (rand() % 256) / 255.0;   // Random value between 0 and 1
-    *green = (rand() % 256) / 255.0; // Random value between 0 and 1
-    *blue = (rand() % 256) / 255.0;  // Random value between 0 and 1
+    // Generate a random index to choose a color from the collection.
+    int random_index = rand() % 9;
 
-    // Calculate the brightness of the color.
-    double brightness = (*red + *green + *blue) / 3.0;
-
-    // If the brightness is too low, increase it slightly to add contrast.
-    if (brightness < 0.3)
-    {
-        double diff = 0.3 - brightness;
-        *red += diff;
-        *green += diff;
-        *blue += diff;
-    }
+    // Assign the selected color to the output pointers.
+    *red = colors[random_index][0];
+    *green = colors[random_index][1];
+    *blue = colors[random_index][2];
 }
 
 void createLine(Grid *grid, double x1, double y1, double x2, double y2)
@@ -252,7 +256,7 @@ void createLine(Grid *grid, double x1, double y1, double x2, double y2)
     if (transformY(grid, y1) > 0)
     {
 
-        cairo_set_source_rgb(cr, 255 / 255.0, 10 / 255.0, 3 / 255.0);
+        // cairo_set_source_rgb(cr, 255 / 255.0, 10 / 255.0, 3 / 255.0);
 
         cairo_set_line_width(cr, 3);
         cairo_move_to(cr, transformX(grid, x1), transformY(grid, y1));

@@ -11,5 +11,45 @@ button.zoom {
 button.zoom:hover {
   background: rgb(38, 38, 38);
 }
-label {
+.sidebar {
+  background-color: rgb(213, 213, 213);
+  padding-top: 10px;
+  padding-left: 10px;
+  padding-right: 10px;
+}
+.sidebar entry {
+  padding: 10px;
+  font-size: 20px;
+}
+.sidebar .addBtn {
+  border-radius: 100px;
+  background: rgb(27, 68, 133);
+  color: white;
+  font-size: 1.3em;
+  padding-left: 40px;
+  padding-right: 40px;
+}
+
+.deleteBtn {
+  background: rgb(169, 41, 25);
+  border-radius: 100px;
+  color: white;
+  font-size: 2em;
+  padding-left: 16px;
+  padding-right: 16px;
+  padding-bottom: 4px;
+}
+.deleteBtn:hover {
+  background: rgb(223, 60, 39);
+}
+
+.sidebar .addBtn:hover {
+  background: rgb(43, 105, 205);
+}
+.sidebar .listbox {
+  background: rgb(255, 255, 255);
+  border-radius: 20px;
+}
+.eqnlabel {
+  font-size: 1.4em;
 }
