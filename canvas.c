@@ -10,6 +10,7 @@ static void redraw_drawing_area(gpointer user_data);
 GtkWidget *areaGlobal;
 GtkWidget *eqnEntry;
 GtkWidget *listbox;
+// Error
 
 void applyCSS(GtkWindow *win)
 {
