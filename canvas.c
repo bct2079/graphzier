@@ -100,6 +100,22 @@ void addPlot(Value v)
     redraw_drawing_area(areaGlobal);
 }
 
+bool checkInsideX(Grid *grid, double x)
+{
+    if (transformX(grid, x) <= grid->width && transformX(grid, x) >= 0)
+        return true;
+    else
+        return false;
+}
+
+bool checkInsideY(Grid *grid, double y)
+{
+    if (transformY(grid, y) <= grid->height && transformY(grid, y) >= 0)
+        return true;
+    else
+        return false;
+}
+
 static void start_main_draw(Grid *grid, int W, int h)
 {
     for (int j = 0; j <= mp->size; j++)
@@ -130,7 +146,20 @@ static void start_main_draw(Grid *grid, int W, int h)
                 cairo_set_source_rgb(grid->cr, p1->r, p1->g, p1->b);
                 // point(grid, i, y);
                 // this needs fix
-                createLine(grid, px, py, i, y);
+                // printf("[%d],[%d]\n", transformX(grid, px), grid->width);
+                if (checkInsideX(grid, px) && checkInsideX(grid, i))
+                {
+                    if (checkInsideY(grid, py) && checkInsideY(grid, y))
+                    {
+                        createLine(grid, px, py, i, y);
+                    }
+                    else
+                    {
+                    }
+                }
+                else
+                {
+                }
                 px = i;
             }
         }

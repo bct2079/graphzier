@@ -253,14 +253,11 @@ void randomize_color(double *red, double *green, double *blue)
 void createLine(Grid *grid, double x1, double y1, double x2, double y2)
 {
     cairo_t *cr = grid->cr;
-    if (transformY(grid, y1) > 0)
-    {
 
-        // cairo_set_source_rgb(cr, 255 / 255.0, 10 / 255.0, 3 / 255.0);
+    // cairo_set_source_rgb(cr, 255 / 255.0, 10 / 255.0, 3 / 255.0);
 
-        cairo_set_line_width(cr, 3);
-        cairo_move_to(cr, transformX(grid, x1), transformY(grid, y1));
-        cairo_line_to(cr, transformX(grid, x2), transformY(grid, y2));
-        cairo_stroke(cr);
-    }
+    cairo_set_line_width(cr, 3);
+    cairo_move_to(cr, transformX(grid, x1), transformY(grid, y1));
+    cairo_line_to(cr, transformX(grid, x2), transformY(grid, y2));
+    cairo_stroke(cr);
 }
