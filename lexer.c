@@ -4,6 +4,8 @@
 #include <string.h>
 #include "error.c"
 
+Error *e_t;
+
 typedef struct LEXER_STRUCT
 {
   char c;
@@ -32,6 +34,10 @@ lexer_T *init_lexer(char *contents)
 
 void lexer_advance(lexer_T *lexer)
 {
+  if (e_t->isError)
+  {
+    return;
+  }
   if (lexer->c != '\0' && lexer->i < strlen(lexer->contents))
   {
     lexer->i++;
@@ -49,8 +55,19 @@ void lexer_skip_whitespace(lexer_T *lexer)
 
 token_T *lexer_get_next_token(lexer_T *lexer)
 {
+
+  if (e_t->isError)
+  {
+    return NULL;
+  }
   while (lexer->c != '\0' && lexer->i < strlen(lexer->contents))
   {
+    // printf("lol2,%d\n", lexer->i);
+
+    if (e_t->isError)
+    {
+      return NULL;
+    }
     if (lexer->c == ' ' || lexer->c == 10)
     {
       lexer_skip_whitespace(lexer);
@@ -103,9 +120,11 @@ token_T *lexer_get_next_token(lexer_T *lexer)
           lexer,
           init_token(TOKEN_COMMA, lexer_get_current_char_as_string(lexer)));
       break;
+    default:
+      define_error(e_t, lexer->i, "Unexpected token");
     }
   }
-  return (void *)0;
+  return NULL;
 }
 
 token_T *lexer_advance_with_token(lexer_T *lexer, token_T *token)

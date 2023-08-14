@@ -6,7 +6,7 @@
 #include <string.h>
 #include <stdarg.h>
 
-Error *e_t;
+extern Error *e_t;
 
 int isNumber(const char *s)
 {
@@ -35,9 +35,9 @@ int isNumber(const char *s)
     else if (*s == 'e' || *s == 'E')
     {
       if (hasExponent || !hasDigit)
-        return false; // Multiple exponents or no digits before
+        return false;
       hasExponent = true;
-      hasSign = false; // Reset sign for the exponent
+      hasSign = false;
     }
     else if (*s >= '0' && *s <= '9')
     {
@@ -45,12 +45,11 @@ int isNumber(const char *s)
     }
     else
     {
-      return false; // Invalid character found
+      return false;
     }
     s++;
   }
 
-  // Must have at least one digit to be considered a number
   return hasDigit;
 }
 double logbase(double y, int b)
@@ -129,9 +128,6 @@ ASTNode *parseExpression(TokenArray *tArray, int count, int index)
         e_t->index = localIndex;
         e_t->isError = true;
         e_t->type = "Unmatched parentheses";
-
-        // fprintf(stderr, "Unmatched parentheses\n");
-        // exit(1);
       }
       else
       {
@@ -174,8 +170,6 @@ ASTNode *parseExpression(TokenArray *tArray, int count, int index)
       e_t->index = index;
       e_t->isError = true;
       e_t->type = "Need atleat one argument";
-      // fprintf(stderr, "Need atleat one argument \n");
-      // exit(1);
     }
   }
   else
@@ -188,36 +182,41 @@ ASTNode *parseExpression(TokenArray *tArray, int count, int index)
     }
   }
 }
-
 void checkArgument(ASTNode *node, int l)
 {
-  // int i = 0;
-  // while (node->children[i] != NULL)
-  // {
-  //   printf("lol:[%s,%d]", node->children[i]->value, i);
-  //   i++;
-  // }
-  // if (i == l)
-  // {
-  //   return;
-  // }
-  // else
-  // {
-  //   e_t->index = -1;
-  //   e_t->isError = true;
-  //   sprintf(e_t->type, "Expected arguments count: %d but got %d", l, i);
-  // }
-}
 
+  int i = 0;
+
+  if (node->children[0] != NULL)
+  {
+    i++;
+  }
+  if (node->children[1] != NULL)
+  {
+    i++;
+  }
+
+  if (i == l)
+  {
+    return;
+  }
+  else
+  {
+    define_error(e_t, -1, "Incorrect arguments count");
+  }
+}
 double evaluateAST(ASTNode *node, double x)
 {
+  if (e_t->isError)
+  {
+    return 0;
+  }
   if (strcmp(node->value, "tan") == 0)
   {
     checkArgument(node, 1);
 
     double l = evaluateAST(node->children[0], x);
 
-    // printf("\nt:[%s]%lf\n", node->value, tan(l));
     return tan(l);
   }
   if (strcmp(node->value, "cos") == 0)
@@ -255,9 +254,7 @@ double evaluateAST(ASTNode *node, double x)
 
     double l = evaluateAST(node->children[0], x);
     double l2 = evaluateAST(node->children[1], x);
-    // printf("\n## %s:%lf ##\n", node->value, l);
 
-    // printf("\nt:[%s]%lf, %lf\n", node->value, l,l2);
     return l + l2;
   }
   if (strcmp(node->value, "minus") == 0)
@@ -266,9 +263,7 @@ double evaluateAST(ASTNode *node, double x)
 
     double l = evaluateAST(node->children[0], x);
     double l2 = evaluateAST(node->children[1], x);
-    // printf("\n## %s:%lf ##\n", node->value, l);
 
-    // printf("\nt:[%s]%lf, %lf\n", node->value, l,l2);
     return l - l2;
   }
   if (strcmp(node->value, "multiply") == 0)
@@ -277,9 +272,7 @@ double evaluateAST(ASTNode *node, double x)
 
     double l = evaluateAST(node->children[0], x);
     double l2 = evaluateAST(node->children[1], x);
-    // printf("\n## %s:%lf ##\n", node->value, l);
 
-    // printf("\nt:[%s]%lf, %lf\n", node->value, l,l2);
     return l * l2;
   }
   if (strcmp(node->value, "divide") == 0)
@@ -288,9 +281,7 @@ double evaluateAST(ASTNode *node, double x)
 
     double l = evaluateAST(node->children[0], x);
     double l2 = evaluateAST(node->children[1], x);
-    // printf("\n## %s:%lf ##\n", node->value, l);
 
-    // printf("\nt:[%s]%lf, %lf\n", node->value, l,l2);
     return l / l2;
   }
   if (strcmp(node->value, "power") == 0)
@@ -299,9 +290,7 @@ double evaluateAST(ASTNode *node, double x)
 
     double l = evaluateAST(node->children[0], x);
     double l2 = evaluateAST(node->children[1], x);
-    // printf("\n## %s:%lf ##\n", node->value, l);
 
-    // printf("\nt:[%s]%lf, %lf\n", node->value, l,l2);
     return pow(l, l2);
   }
   if (strcmp(node->value, "exp") == 0)
@@ -309,9 +298,7 @@ double evaluateAST(ASTNode *node, double x)
     checkArgument(node, 1);
 
     double l = evaluateAST(node->children[0], x);
-    // printf("\n## %s:%lf ##\n", node->value, l);
 
-    // printf("\nt:[%s]%lf, %lf\n", node->value, l,l2);
     return exp(l);
   }
   if (strcmp(node->value, "log10") == 0)
@@ -319,9 +306,7 @@ double evaluateAST(ASTNode *node, double x)
     checkArgument(node, 1);
 
     double l = evaluateAST(node->children[0], x);
-    // printf("\n## %s:%lf ##\n", node->value, l);
 
-    // printf("\nt:[%s]%lf, %lf\n", node->value, l,l2);
     return log10(l);
   }
   if (strcmp(node->value, "log") == 0 || strcmp(node->value, "ln") == 0)
@@ -329,9 +314,7 @@ double evaluateAST(ASTNode *node, double x)
     checkArgument(node, 1);
 
     double l = evaluateAST(node->children[0], x);
-    // printf("\n## %s:%lf ##\n", node->value, l);
 
-    // printf("\nt:[%s]%lf, %lf\n", node->value, l,l2);
     return log(l);
   }
   if (strcmp(node->value, "logBase") == 0)
@@ -341,9 +324,6 @@ double evaluateAST(ASTNode *node, double x)
     double l = evaluateAST(node->children[0], x);
     double l2 = evaluateAST(node->children[1], x);
 
-    // printf("\n## %s:%lf ##\n", node->value, l);
-
-    // printf("\nt:[%s]%lf, %lf\n", node->value, l,l2);
     return logbase(l, l2);
   }
 }
@@ -383,71 +363,11 @@ Value func(char *code, double x)
     addToTokenArray(tokenArray, token);
   }
   int s = 0;
-  // for (int i = 0; i < tokenArray->size - 1; i++)
-  // {
-  //   // printf("\n{[%s:%d]}\n", tokenArray->tokens[i]->value,
-  //   //        tokenArray->tokens[i]->type);
-  // }
-
-  // int token_count = sizeof(token_input) / sizeof(token_T);
   int token_count = tokenArray->size - 1;
 
   ASTNode *ast = parseExpression(tokenArray, token_count, 0);
-  int t_index = 0;
-  // if (e_t->isError)
-  // {
-  //   v.error = *e_t;
-  //   v.ast = *ast;
-  //   return v;
-  // }
 
-  // double t = evaluateAST(ast, (22.0 / 7) / 3);
-  // v.error = *e_t;
+  int t_index = 0;
   v.ast = *ast;
   return v;
 }
-
-void printInRed(const char *format, ...)
-{
-  va_list args;
-  va_start(args, format);
-
-  // ANSI escape code for red text: \x1B[31m
-  // ANSI escape code to reset text color: \x1B[0m
-  printf("\x1B[31m");
-  vprintf(format, args);
-  printf("\x1B[0m");
-
-  va_end(args);
-}
-
-// int main()
-// {
-//   e_t = init_error();
-//   // char *code = "add(sin(3), 4)";
-//   char t[100];
-//   printf("BCT 1.0.0 (tags/v1)"
-//          "Type a simple math equation\n");
-//   while (1)
-//   {
-//     printf("@root >>> ");
-//     int z = scanf("%[^\n]s", t);
-//     getchar();
-//     double result = f(t, (22.0 / 7) / 3);
-//     if (e_t->isError)
-//     {
-//       printInRed("[Error]:%s at token %d\n", e_t->type, e_t->index);
-//     }
-//     else
-//     {
-//       printf("%lf\n", result);
-//     }
-//     e_t->type = (void *)0;
-//     e_t->isError = false;
-//   }
-
-//   // printf("\nAns:%lf\n", f(code, (22.0 / 7) / 3));
-//   // x = (22.0 / 7) / 3;   =====> pi / 3
-
-//   return 0;
-// }

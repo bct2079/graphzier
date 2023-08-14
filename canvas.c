@@ -5,11 +5,15 @@
 #include "grid.c"
 #include "compiler.c"
 
-static void redraw_drawing_area(gpointer user_data);
+extern Error *e_t;
 
 GtkWidget *areaGlobal;
 GtkWidget *eqnEntry;
 GtkWidget *listbox;
+GtkWidget *labelErr;
+static void redraw_drawing_area(gpointer user_data);
+void setErrorLabel(char *text);
+
 // Error
 
 void applyCSS(GtkWindow *win)
@@ -100,15 +104,29 @@ static void start_main_draw(Grid *grid, int W, int h)
 {
     for (int j = 0; j <= mp->size; j++)
     {
+        if (e_t->isError)
+        {
+            break;
+        }
         int indexT = (int)j;
         Plot *p1 = mp->p[indexT];
         if (mp->p[indexT]->show)
         {
+            if (e_t->isError)
+            {
+                break;
+            }
             double px = -1.0 * W;
             for (double i = -1.0 * W / gap; i <= W / gap; i += 0.001)
             {
+
                 double py = evaluateAST(&mp->p[indexT]->value.ast, px);
                 double y = evaluateAST(&mp->p[indexT]->value.ast, i);
+                if (e_t->isError)
+                {
+                    break;
+                }
+
                 cairo_set_source_rgb(grid->cr, p1->r, p1->g, p1->b);
                 // point(grid, i, y);
                 // this needs fix
@@ -122,21 +140,14 @@ void removeWidgetFromList(GtkButton *button, gpointer data)
 {
     GtkWidget *box = GTK_WIDGET(data);
     GtkListBoxRow *row = GTK_LIST_BOX_ROW(gtk_widget_get_ancestor(box, GTK_TYPE_LIST_BOX_ROW));
-    g_print("\ntest0\n");
     if (row != NULL)
     {
-        g_print("\ntest0\n");
 
         int index = gtk_list_box_row_get_index(row);
-        g_print("%d", index);
         remove_plot_from_multiplot(index);
-        g_print("index:%d\n", index);
         // gtk_widget_unparent(box);
-        g_print("\ntest1\n");
         gtk_list_box_remove(GTK_LIST_BOX(listbox), GTK_WIDGET(row));
-        g_print("\ntest2\n");
         redraw_drawing_area(areaGlobal);
-        g_print("\ntest3\n");
     }
 }
 
@@ -187,19 +198,47 @@ GtkWidget *one_area_input(GtkWidget *area, char *v)
     g_signal_connect(button, "clicked", G_CALLBACK(removeWidgetFromList), box);
     return box;
 }
+void setErrorLabel(char *text)
+{
+    gtk_label_set_markup(GTK_LABEL(labelErr), text);
+}
+
+void setError(char *text)
+{
+    setErrorLabel(text);
+    gtk_widget_add_css_class(eqnEntry, "errorL");
+}
+void clearError()
+{
+    setErrorLabel("");
+    gtk_widget_remove_css_class(eqnEntry, "errorL");
+}
 
 static void add_one_area_input(GtkWidget *widget, gpointer user_data)
 {
+    clear_error(e_t); // from compiler
+    clearError();     // from UI
     GtkEntryBuffer *buffer = gtk_entry_get_buffer(GTK_ENTRY(eqnEntry));
     const char *codeEqn = gtk_entry_buffer_get_text(buffer);
 
     char *mutableCodeEqn = g_strdup(codeEqn);
-
     Value v = func(mutableCodeEqn, 1);
+    g_print("[%d]", e_t->isError);
+    double py = evaluateAST(&v.ast, 1);
 
-    GtkWidget *area = one_area_input(areaGlobal, mutableCodeEqn);
-    gtk_list_box_append(GTK_LIST_BOX(listbox), area);
-    addPlot(v);
+    if (e_t->isError)
+    {
+        gchar *utf8ErrorType = g_locale_to_utf8(v.error.type, -1, NULL, NULL, NULL);
+
+        setError(e_t->type);
+    }
+    else
+    {
+
+        GtkWidget *area = one_area_input(areaGlobal, mutableCodeEqn);
+        gtk_list_box_append(GTK_LIST_BOX(listbox), area);
+        addPlot(v);
+    }
 }
 
 static void design_box(GtkBox *box, GtkWidget *area)
@@ -208,6 +247,10 @@ static void design_box(GtkBox *box, GtkWidget *area)
     eqnEntry = gtk_entry_new();
     GtkWidget *topBox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 10);
     GtkWidget *headerBox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 10);
+    labelErr = gtk_label_new_with_mnemonic(NULL);
+    const char *labelClass[] = {"error_label", NULL};
+    gtk_widget_set_css_classes(labelErr, labelClass);
+
     GtkWidget *addAreaButton = gtk_button_new_with_label("add");
     const char *class2[] = {"addBtn", NULL};
     gtk_widget_set_css_classes(addAreaButton, class2);
@@ -224,6 +267,8 @@ static void design_box(GtkBox *box, GtkWidget *area)
 
     gtk_box_append(GTK_BOX(topBox), headerBox);
     gtk_box_append(GTK_BOX(box), topBox);
+    gtk_box_append(box, labelErr);
+
     gtk_box_append(GTK_BOX(box), listbox);
     g_signal_connect(addAreaButton, "clicked", G_CALLBACK(add_one_area_input), listbox);
     const char *class[] = {"sidebar", NULL};
@@ -280,6 +325,7 @@ static void app_activate(GApplication *app, gpointer user_data)
 
 int main(int argc, char **argv)
 {
+    e_t = init_error();
     GtkApplication *app;
     int stat;
 

@@ -21,6 +21,11 @@ button.zoom:hover {
   padding: 10px;
   font-size: 20px;
 }
+.sidebar entry.errorL {
+  border: 2px solid red;
+  outline: none;
+}
+
 .sidebar .addBtn {
   border-radius: 100px;
   background: rgb(27, 68, 133);
@@ -52,4 +57,8 @@ button.zoom:hover {
 }
 .eqnlabel {
   font-size: 1.4em;
+}
+.error_label {
+  color: rgb(169, 41, 25);
+  font-size: 1.1em;
 }
