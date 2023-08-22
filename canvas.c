@@ -6,6 +6,7 @@
 #include "compiler.c"
 #define APPLICATION_ID "com.github.EV-OD"
 
+extern Error *error_type;
 
 //function prototypes
 static void redraw_drawing_area(gpointer user_data);
@@ -37,7 +38,6 @@ int gap = 60;
 int click = 0;
 MultiPlot *mp;
 
-extern Error *error_type;
 GtkWidget *areaGlobal;
 GtkWidget *eqnEntry;
 GtkWidget *listbox;
