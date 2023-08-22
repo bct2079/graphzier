@@ -4,46 +4,20 @@
 #include <stdlib.h>
 #include "grid.c"
 #include "compiler.c"
+#define APPLICATION_ID "com.github.EV-OD"
 
-extern Error *e_t;
 
-GtkWidget *areaGlobal;
-GtkWidget *eqnEntry;
-GtkWidget *listbox;
-GtkWidget *labelErr;
+//function prototypes
 static void redraw_drawing_area(gpointer user_data);
 void setErrorLabel(char *text);
+void applyCSS(GtkWindow *win);
 
-// Error
-
-void applyCSS(GtkWindow *win)
-{
-
-    GdkDisplay *display;
-    display = gtk_widget_get_display(GTK_WIDGET(win));
-    GtkCssProvider *provider = gtk_css_provider_new();
-    gtk_css_provider_load_from_path(provider, "style.css");
-    gtk_style_context_add_provider_for_display(display, GTK_STYLE_PROVIDER(provider), GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
-    g_object_unref(provider);
-}
-
-int gap = 40;
-
-double f(double x);
-
-double f(double x)
-{
-    return x * x * x;
-}
-double f2(double x)
-{
-    return x * x;
-}
+//structure definitions
 
 typedef struct
 {
     int func;
-    char *t;
+    char *text;
     Value value;
     int show;
     double r;
@@ -57,8 +31,34 @@ typedef struct
     Plot **p;
 } MultiPlot;
 
+
+//variable declaration
+int gap = 60;
+int click = 0;
 MultiPlot *mp;
 
+extern Error *error_type;
+GtkWidget *areaGlobal;
+GtkWidget *eqnEntry;
+GtkWidget *listbox;
+GtkWidget *labelErr;
+
+
+
+// Error 
+void applyCSS(GtkWindow *win)
+{
+
+    GdkDisplay *display;
+    display = gtk_widget_get_display(GTK_WIDGET(win));
+    GtkCssProvider *provider = gtk_css_provider_new();
+    gtk_css_provider_load_from_path(provider, "style.css");
+    gtk_style_context_add_provider_for_display(display, GTK_STYLE_PROVIDER(provider), GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
+    g_object_unref(provider);
+}
+
+
+//window init
 void initialize()
 {
     mp = calloc(1, sizeof(MultiPlot));
@@ -89,7 +89,7 @@ void addPlot(Value v)
     randomize_color(&r, &g, &b);
     Plot *p = calloc(1, sizeof(Plot));
     p->func = 1;
-    p->t = "rabin";
+    p->text = "rabin";
     p->show = 1;
     p->value = v;
     p->r = r;
@@ -116,42 +116,51 @@ bool checkInsideY(Grid *grid, double y)
         return false;
 }
 
-static void start_main_draw(Grid *grid, int W, int h)
+static void start_main_draw(Grid *grid, int W, int h) //drawing area
+
 {
     for (int j = 0; j <= mp->size; j++)
     {
-        if (e_t->isError)
+        if (error_type->isError)
         {
             break;
         }
+
         int indexT = (int)j;
         Plot *p1 = mp->p[indexT];
+
+        //display plot if visible
         if (mp->p[indexT]->show)
         {
-            if (e_t->isError)
+            if (error_type->isError)
             {
                 break;
             }
-            double px = -1.0 * W;
-            for (double i = -1.0 * W / gap; i <= W / gap; i += 0.001)
+
+            //plotting values
+            double prev_x = -1.0 * W;
+            for (double crnt_x = -1.0 * W / gap; crnt_x <= W / gap; crnt_x += 0.001)
             {
 
-                double py = evaluateAST(&mp->p[indexT]->value.ast, px);
-                double y = evaluateAST(&mp->p[indexT]->value.ast, i);
-                if (e_t->isError)
+                double prev_y = evaluateAST(&mp->p[indexT]->value.ast, prev_x);
+                double crnt_y = evaluateAST(&mp->p[indexT]->value.ast, crnt_x);
+                
+                if (error_type->isError)
                 {
                     break;
                 }
 
                 cairo_set_source_rgb(grid->cr, p1->r, p1->g, p1->b);
+
                 // point(grid, i, y);
                 // this needs fix
                 // printf("[%d],[%d]\n", transformX(grid, px), grid->width);
-                if (checkInsideX(grid, px) && checkInsideX(grid, i))
+
+                if (checkInsideX(grid, prev_x) && checkInsideX(grid, crnt_x))
                 {
-                    if (checkInsideY(grid, py) && checkInsideY(grid, y))
+                    if (checkInsideY(grid, prev_y) && checkInsideY(grid, crnt_y))
                     {
-                        createLine(grid, px, py, i, y);
+                        createLine(grid, prev_x, prev_y, crnt_x, crnt_y);
                     }
                     else
                     {
@@ -160,11 +169,12 @@ static void start_main_draw(Grid *grid, int W, int h)
                 else
                 {
                 }
-                px = i;
+                prev_x = crnt_x;
             }
         }
     }
 }
+
 void removeWidgetFromList(GtkButton *button, gpointer data)
 {
     GtkWidget *box = GTK_WIDGET(data);
@@ -186,26 +196,38 @@ static void draw_function(GtkDrawingArea *area, cairo_t *cr, int width, int heig
     cairo_set_source_rgb(cr, 1, 1, 1);
 
     cairo_paint(cr);
-    Grid *grid = init_grid(cr, gap);
+    Grid *grid = init_grid(cr, gap,click);
+
+
+    // Grid *point_grid = init_grid(cr,(60 +10*click),click);
+
     create_grid(grid, width, height);
 
     start_main_draw(grid, width, height);
 }
+
 static void redraw_drawing_area(gpointer user_data)
 {
     gtk_widget_queue_draw(GTK_WIDGET(user_data));
 }
+
 static void ZoomIn(GtkWidget *widget, gpointer user_data)
 {
-    gap += 10;
+    if(click<10)
+    {
+        click ++;
+        gap += 10;
+    }
+
     redraw_drawing_area(user_data);
 }
+
 static void ZoomOut(GtkWidget *widget, gpointer user_data)
 {
-    gap -= 10;
-    if (gap <= 0)
+    if(-3<click)
     {
-        gap = 10;
+        click --;
+        gap -= 10;
     }
     redraw_drawing_area(user_data);
 }
@@ -227,6 +249,7 @@ GtkWidget *one_area_input(GtkWidget *area, char *v)
     g_signal_connect(button, "clicked", G_CALLBACK(removeWidgetFromList), box);
     return box;
 }
+
 void setErrorLabel(char *text)
 {
     gtk_label_set_markup(GTK_LABEL(labelErr), text);
@@ -237,6 +260,7 @@ void setError(char *text)
     setErrorLabel(text);
     gtk_widget_add_css_class(eqnEntry, "errorL");
 }
+
 void clearError()
 {
     setErrorLabel("");
@@ -245,21 +269,22 @@ void clearError()
 
 static void add_one_area_input(GtkWidget *widget, gpointer user_data)
 {
-    clear_error(e_t); // from compiler
+    clear_error(error_type); // from compiler
     clearError();     // from UI
+
     GtkEntryBuffer *buffer = gtk_entry_get_buffer(GTK_ENTRY(eqnEntry));
     const char *codeEqn = gtk_entry_buffer_get_text(buffer);
 
     char *mutableCodeEqn = g_strdup(codeEqn);
     Value v = func(mutableCodeEqn, 1);
-    g_print("[%d]", e_t->isError);
+    g_print("[%d]", error_type->isError);
     double py = evaluateAST(&v.ast, 1);
 
-    if (e_t->isError)
+    if (error_type->isError)
     {
         gchar *utf8ErrorType = g_locale_to_utf8(v.error.type, -1, NULL, NULL, NULL);
 
-        setError(e_t->type);
+        setError(error_type->type);
     }
     else
     {
@@ -274,8 +299,10 @@ static void design_box(GtkBox *box, GtkWidget *area)
 {
     initialize();
     eqnEntry = gtk_entry_new();
+
     GtkWidget *topBox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 10);
     GtkWidget *headerBox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 10);
+
     labelErr = gtk_label_new_with_mnemonic(NULL);
     const char *labelClass[] = {"error_label", NULL};
     gtk_widget_set_css_classes(labelErr, labelClass);
@@ -283,6 +310,7 @@ static void design_box(GtkBox *box, GtkWidget *area)
     GtkWidget *addAreaButton = gtk_button_new_with_label("add");
     const char *class2[] = {"addBtn", NULL};
     gtk_widget_set_css_classes(addAreaButton, class2);
+
     listbox = gtk_list_box_new();
     areaGlobal = area;
     const char *class1[] = {"listbox", NULL};
@@ -350,16 +378,15 @@ static void app_activate(GApplication *app, gpointer user_data)
     gtk_window_present(GTK_WINDOW(win));
 }
 
-#define APPLICATION_ID "com.github.EV-OD"
-
 int main(int argc, char **argv)
 {
-    e_t = init_error();
+    error_type = init_error();
     GtkApplication *app;
     int stat;
 
     app = gtk_application_new(APPLICATION_ID, G_APPLICATION_DEFAULT_FLAGS);
     g_signal_connect(app, "activate", G_CALLBACK(app_activate), NULL);
+    
     stat = g_application_run(G_APPLICATION(app), argc, argv);
     g_object_unref(app);
     return stat;
