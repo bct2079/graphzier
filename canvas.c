@@ -153,12 +153,6 @@ static void start_main_draw(Grid *grid, int W, int h)
                     {
                         createLine(grid, px, py, i, y);
                     }
-                    else
-                    {
-                    }
-                }
-                else
-                {
                 }
                 px = i;
             }

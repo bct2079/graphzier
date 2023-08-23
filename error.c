@@ -12,7 +12,7 @@ Error *init_error()
 {
     Error *error = calloc(1, sizeof(Error));
     error->index = -1;
-    error->type = (void *)0;
+    error->type = NULL;
     error->isError = false;
     return error;
 }
