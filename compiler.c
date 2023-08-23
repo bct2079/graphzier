@@ -6,7 +6,7 @@
 #include <string.h>
 #include <stdarg.h>
 
-extern Error *e_t;
+extern Error *error_type;
 
 int isNumber(const char *s)
 {
@@ -65,7 +65,7 @@ typedef struct ASTNode
   double arg_value;
   struct ASTNode *children[2];
   token_T *token;
-  Error *e_t;
+  Error *error_type;
 } ASTNode;
 ASTNode *createNode(char *value, token_T *token);
 ASTNode *parseExpression(TokenArray *tArray, int count, int index);
@@ -125,9 +125,9 @@ ASTNode *parseExpression(TokenArray *tArray, int count, int index)
       }
       if (right == -1)
       {
-        e_t->index = localIndex;
-        e_t->isError = true;
-        e_t->type = "Unmatched parentheses";
+        error_type->index = localIndex;
+        error_type->isError = true;
+        error_type->type = "Unmatched parentheses";
       }
       else
       {
@@ -167,9 +167,9 @@ ASTNode *parseExpression(TokenArray *tArray, int count, int index)
     }
     else
     {
-      e_t->index = index;
-      e_t->isError = true;
-      e_t->type = "Need atleat one argument";
+      error_type->index = index;
+      error_type->isError = true;
+      error_type->type = "Need atleat one argument";
     }
   }
   else
@@ -202,12 +202,12 @@ void checkArgument(ASTNode *node, int l)
   }
   else
   {
-    define_error(e_t, -1, "Incorrect arguments count");
+    define_error(error_type, -1, "Incorrect arguments count");
   }
 }
 double evaluateAST(ASTNode *node, double x)
 {
-  if (e_t->isError)
+  if (error_type->isError)
   {
     return 0;
   }

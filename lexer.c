@@ -4,7 +4,7 @@
 #include <string.h>
 #include "error.c"
 
-Error *e_t;
+Error *error_type;
 
 typedef struct LEXER_STRUCT
 {
@@ -34,7 +34,7 @@ lexer_T *init_lexer(char *contents)
 
 void lexer_advance(lexer_T *lexer)
 {
-  if (e_t->isError)
+  if (error_type->isError)
   {
     return;
   }
@@ -56,7 +56,7 @@ void lexer_skip_whitespace(lexer_T *lexer)
 token_T *lexer_get_next_token(lexer_T *lexer)
 {
 
-  if (e_t->isError)
+  if (error_type->isError)
   {
     return NULL;
   }
@@ -64,7 +64,7 @@ token_T *lexer_get_next_token(lexer_T *lexer)
   {
     // printf("lol2,%d\n", lexer->i);
 
-    if (e_t->isError)
+    if (error_type->isError)
     {
       return NULL;
     }
@@ -121,7 +121,7 @@ token_T *lexer_get_next_token(lexer_T *lexer)
           init_token(TOKEN_COMMA, lexer_get_current_char_as_string(lexer)));
       break;
     default:
-      define_error(e_t, lexer->i, "Unexpected token");
+      define_error(error_type, lexer->i, "Unexpected token");
     }
   }
   return NULL;
